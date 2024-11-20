@@ -46,17 +46,14 @@ export class LoginCreateItems {
         await this.addButton.click();
     }
 
-    async setDueDateToFirstItem(day: string) {
-        const items = this.page.locator('#mainItemList li');
-        await expect(items).toHaveCount(1, { timeout: 5000 });
-
-        const firstItem = items.first();
-        await expect(firstItem).toBeVisible();
+    async setDueDateToFirstItem(itemContent: string, day: string) {
+        const item = this.page.locator('#mainItemList li', { hasText: itemContent });
+        await expect(item).toBeVisible();
     
         // Hacer hover sobre el primer ítem para que el botón "Set Due Date" se haga visible
-        await firstItem.hover();
+        await item.hover();
     
-        const setDueDateButton = firstItem.locator('.ItemDueDate');
+        const setDueDateButton = item.locator('.ItemDueDate');
         await setDueDateButton.waitFor({ state: 'attached', timeout: 5000 });
         await expect(setDueDateButton).toBeVisible({ timeout: 5000 });
         await setDueDateButton.click();
@@ -64,6 +61,20 @@ export class LoginCreateItems {
         await this.page.getByRole('link', { name: day }).click();
     
         await this.dueDateSaveButton.click();
+    }
+
+    async clearAllItems() {
+        const items = this.page.locator('#mainItemList li');
+        const count = await items.count();
+    
+        // Elimina cada ítem existente
+        for (let i = 0; i < count; i++) {
+            const deleteButton = items.nth(i).locator('.delete-button'); // Ajusta el selector según tu HTML
+            await deleteButton.click();
+        }
+    
+        // Espera a que no queden elementos
+        await expect(items).toHaveCount(0);
     }
 
 }

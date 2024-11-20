@@ -8,11 +8,13 @@ test.describe('Pruebas', () => {
     test.beforeEach(async ({ page }) => {
         loginCreateItems = new LoginCreateItems(page);
         await loginCreateItems.goto();
+
+        await loginCreateItems.clearAllItems();
     });
 
-    test('Iniciar sesión', async ({ page }) => {
+    /*test('Iniciar sesión', async ({ page }) => {
         await loginCreateItems.login('felipeperez@gmail.com', 'felipecontrasena');
-    });
+    });*/
 
     test('Agregar ítems y asignar fecha de entrega', async ({ page }) => {
         await loginCreateItems.login('felipeperez@gmail.com', 'felipecontrasena');
@@ -24,8 +26,7 @@ test.describe('Pruebas', () => {
         await loginCreateItems.addItem(secondItem);
 
         const dueDateDay = '29';
-
-        await loginCreateItems.setDueDateToFirstItem(dueDateDay);
+        await loginCreateItems.setDueDateToFirstItem(firstItem, dueDateDay);
 
         const mainItemList = page.locator('#mainItemList');
 
