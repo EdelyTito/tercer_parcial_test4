@@ -41,12 +41,63 @@ export class LoginCreateItems {
         await this.homeTab.click();
     }
 
+    async selectEmptyProject() {
+        // Seleccionar todos los proyectos principales
+        const mainProjects = this.page.locator('#mainProjectList > li.BaseProjectLi');
+        const projectCount = await mainProjects.count();
+    
+        for (let i = 0; i < projectCount; i++) {
+            const project = mainProjects.nth(i);
+    
+            // Verificar si el proyecto contiene subproyectos (descartar si tiene un ul.ItemSubList)
+            const hasSubProjects = await project.locator('ul.ItemSubList').count();
+            if (hasSubProjects > 0) {
+                console.log(`Skipping subproject container: ${i}`);
+                continue; // Salta los contenedores de subproyectos
+            }
+    
+            // Verificar si el proyecto está vacío
+            const projectIndicator = project.locator('.ItemIndicator .ListCount');
+            const itemCountText = await projectIndicator.innerText();
+    
+            if (itemCountText === '0') {
+                // Hacer clic en el proyecto vacío
+                await project.click();
+                console.log(`Selected empty project at index: ${i}`);
+                return;
+            }
+        }
+    
+        throw new Error('No empty project found');
+    }
+    
     async addItem(itemContent: string) {
         await this.newItemInput.fill(itemContent);
         await this.addButton.click();
     }
 
-    async setDueDateToFirstItem(itemContent: string, day: string) {
+    async goToRandomNextMonth() {
+        const nextButton = this.page.locator('.ui-datepicker-next');
+        await expect(nextButton).toBeVisible({ timeout: 5000 });
+    
+        // Generar un número aleatorio entre 1 y 12
+        const randomClicks = Math.floor(Math.random() * 12) + 1;
+        console.log(`Avanzando ${randomClicks} meses...`);
+    
+        // Hacer clic en el botón "Next" el número de veces generado
+        for (let i = 0; i < randomClicks; i++) {
+            await nextButton.click();
+            // Esperar un pequeño intervalo para asegurar que la transición se complete
+            await this.page.waitForTimeout(500);
+        }
+    
+        // Verificar que el mes haya cambiado correctamente (opcional)
+        const currentMonth = await this.page.locator('.ui-datepicker-month').innerText();
+        console.log(`Mes actual después de avanzar: ${currentMonth}`);
+    }
+
+
+    async setDueDateToFirstItem(itemContent: string) {
         const item = this.page.locator('#mainItemList li', { hasText: itemContent });
         await expect(item).toBeVisible();
     
@@ -58,8 +109,16 @@ export class LoginCreateItems {
         await expect(setDueDateButton).toBeVisible({ timeout: 5000 });
         await setDueDateButton.click();
     
-        await this.page.getByRole('link', { name: day }).click();
-    
+        // Avanzar a un mes aleatorio
+        await this.goToRandomNextMonth();
+
+        // Generar un día aleatorio entre 1 y 28 (para garantizar compatibilidad con todos los meses)
+        const randomDay = Math.floor(Math.random() * 28) + 1;
+        console.log(`Seleccionando día aleatorio: ${randomDay}`);
+
+        // Seleccionar el día aleatorio
+        await this.page.locator('.ui-datepicker-calendar').getByRole('link', { name: String(randomDay) }).click();
+
         await this.dueDateSaveButton.click();
     }
 
