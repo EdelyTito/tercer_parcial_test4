@@ -28,115 +28,114 @@ export class SesionCrearItemFecha {
 
     // Método para navegar a la página de la aplicación
     async irAlEnlace() {
-        // Navegar a la URL con espera hasta que se cargue el DOM
         await this.pagina.goto(this.enlace, { waitUntil: 'domcontentloaded', timeout: 60000 });
         console.log('Página cargada con éxito');
     }    
 
     // Método para iniciar sesión con el correo electrónico y contraseña proporcionados
     async iniciarSesion(correoElectronico: string, contrasena: string) {
-        // Hacer clic en el botón de inicio de sesión
+        // Verificar que el botón de inicio de sesión sea visible y hacer clic en él
+        await expect(this.botonFormularioInicioDeSesion).toBeVisible();
         await this.botonFormularioInicioDeSesion.click();
-        // Rellenar los campos de correo y contraseña
+
+        //Verificar que los campos de correo electrónico y contraseña sean visibles y llenarlos con los datos proporcionados
+        await expect(this.entradaCorreoElectronico).toBeVisible();
         await this.entradaCorreoElectronico.fill(correoElectronico);
+
+        //Verificar que el campo de contraseña sea visible y llenarlo con la contraseña proporcionada
+        await expect(this.entradaContrasena).toBeVisible();
         await this.entradaContrasena.fill(contrasena);
-        // Hacer clic en el botón para iniciar sesión
+
+        //Verificar que el botón de inicio de sesión sea visible y hacer clic en él
+        await expect(this.botonIniciarSesion).toBeVisible();
         await this.botonIniciarSesion.click();
         console.log('Inicio de sesión completado');
     }
 
     // Método para seleccionar un proyecto vacío de la lista de proyectos
     async seleccionarProyectoVacio() {
-        // Localizar todos los proyectos principales
         const proyectosPrincipales = this.pagina.locator('#mainProjectList > li.BaseProjectLi');
         const contadorDeProyectos = await proyectosPrincipales.count();
     
-        // Iterar sobre los proyectos y buscar uno vacío
         for (let i = 0; i < contadorDeProyectos; i++) {
             const proyecto = proyectosPrincipales.nth(i);
-    
-            // Verificar si el proyecto tiene subproyectos (y descartarlo si los tiene)
             const tieneSubProyectos = await proyecto.locator('ul.ItemSubList').count();
             if (tieneSubProyectos > 0) {
                 continue; // Saltar proyectos con subproyectos
             }
     
-            // Verificar si el proyecto está vacío (sin ítems)
             const indicadorProyectoVacio = proyecto.locator('.ItemIndicator .ListCount');
             const contadorDeItems = await indicadorProyectoVacio.innerText();
     
             if (contadorDeItems === '0') {
                 console.log(`Proyecto vacío encontrado`);
-                // Si el proyecto está vacío, hacer clic en él
+                //Verificar que se pueda hacer clic en el proyecto vacío y hacer clic en él
+                await expect(proyecto).toBeVisible();
                 await proyecto.click();
                 return;
             }
         }
-        // Si no se encuentra un proyecto vacío, lanzar un error
         throw new Error('No se encontraron proyectos vacíos');
     }
     
     // Método para agregar un nuevo ítem con el contenido proporcionado
     async agregarItem(contenidoDelItem: string) {
-        // Rellenar el campo de contenido del ítem
+        //Verificar que se pueda hacer clic en el campo de entrada de un nuevo ítem y llenarlo con el contenido proporcionado
+        await expect(this.entradaNuevoItem).toBeVisible();
         await this.entradaNuevoItem.fill(contenidoDelItem);
-        // Hacer clic en el botón para agregar el ítem
+
+        await expect(this.botonAgregarItem).toBeVisible();
         await this.botonAgregarItem.click();
         console.log('Ítem agregado con éxito');
     }
 
     // Método para seleccionar un mes aleatorio en el calendario
     async seleccionarMesAleatorio() {
-        // Localizar el botón para avanzar al siguiente mes
         const botonSiguienteMes = this.pagina.locator('.ui-datepicker-next');
+        //Verificar que se pueda hacer clic en el botón de siguiente mes
         await expect(botonSiguienteMes).toBeVisible({ timeout: 5000 });
     
-        // Generar un número aleatorio entre 1 y 12 (representando los meses del año)
         const clicksAleatorios = Math.floor(Math.random() * 12) + 1;
         console.log(`Avanzando ${clicksAleatorios} meses...`);
     
-        // Hacer clic en el botón de siguiente mes el número de veces aleatorio generado
         for (let i = 0; i < clicksAleatorios; i++) {
             await botonSiguienteMes.click();
-            // Esperar un pequeño intervalo para asegurar que la transición del mes se complete
             await this.pagina.waitForTimeout(500);
         }
     
-        // Verificar que el mes haya cambiado correctamente (opcional)
         const mesSeleccionado = await this.pagina.locator('.ui-datepicker-month').innerText();
         console.log(`Mes seleccionado después de avanzar: ${mesSeleccionado}`);
     }
 
-
     // Método para asignar una fecha de entrega aleatoria al primer ítem con el contenido especificado
     async asignarFechaEntregaAlPrimerItem(contenidoDelItem: string) {
-        // Localizar el ítem en la lista con el contenido proporcionado
         console.log(`Asignando fecha de entrega al ítem: ${contenidoDelItem}`);
         const item = this.pagina.locator('#mainItemList li', { hasText: contenidoDelItem });
+        const count = await item.count();
+    
+        if (count !== 1) {
+            throw new Error(`Se encontraron ${count} ítems con el texto: ${contenidoDelItem}`);
+        }
+        
+        //Verificar que se pueda hacer clic en el ítem y hacer clic en él
         await expect(item).toBeVisible();
-    
-        // Hacer hover sobre el ítem para que el botón de "Set Due Date" se haga visible
         await item.hover();
-    
-        // Localizar y hacer clic en el botón de asignar fecha de entrega
+
         const botonAsignarFechaDeEntrega = item.locator('.ItemDueDate');
-        await botonAsignarFechaDeEntrega.waitFor({ state: 'attached', timeout: 5000 });
+        //Verificar que esté visible el botón para asignar la fecha de entrega y hacer clic en él
         await expect(botonAsignarFechaDeEntrega).toBeVisible({ timeout: 5000 });
         await botonAsignarFechaDeEntrega.click();
-    
-        // Seleccionar un mes aleatorio
+
         await this.seleccionarMesAleatorio();
 
-        // Generar un día aleatorio entre 1 y 28 (para evitar problemas con meses de 30 días)
         const diaAleatorio = Math.floor(Math.random() * 28) + 1;
         console.log(`Día aleatorio seleccionado: ${diaAleatorio}`);
 
-        // Seleccionar el día aleatorio en el calendario
-        await this.pagina.locator('.ui-datepicker-calendar').getByRole('link', { name: String(diaAleatorio) }).click();
+        await this.pagina.locator('.ui-datepicker-calendar').getByRole('link', { name: String(diaAleatorio) }).first().click();
 
-        // Hacer clic en el botón para guardar la fecha de entrega seleccionada
+        //Verificar que se pueda hacer clic en el botón de guardar la fecha de entrega y hacer clic en él
+        await expect(this.botonGuardarFechaEntrega).toBeVisible();
         await this.botonGuardarFechaEntrega.click();
         console.log('Fecha de entrega asignada con éxito');
     }
-
 }

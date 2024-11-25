@@ -34,17 +34,24 @@ test('Agregar ítems y asignar fecha de entrega', async ({ page }) => {
 
     // Localiza la lista de ítems en la página
     const listaDeItems = page.locator('#mainItemList');
+    
+    // Verificar que la lista de ítems esté visible
+    await expect(listaDeItems).toBeVisible();
+
+    // Verificar que haya exactamente 2 ítems en la lista
+    const items = await listaDeItems.locator('li').count();
+    await expect(items).toBe(2); // Espera que haya exactamente 2 ítems
 
     // Localiza el primer ítem dentro de la lista basado en su nombre aleatorio
     const localizadorPrimerItem = listaDeItems.locator('li', { hasText: primerItem });
     
-    // Verifica que el primer ítem sea visible en la página
+    // Verificar que el primer ítem sea visible en la página
     await expect(localizadorPrimerItem).toBeVisible();
 
     // Localiza la fecha de entrega asignada al primer ítem
     const localizadorFechaDeEntrega = localizadorPrimerItem.locator('.ItemDueDateInner');
     
-    // Verifica que la fecha de entrega esté visible
+    // Verificar que la fecha de entrega esté visible
     await expect(localizadorFechaDeEntrega).toBeVisible();
 
     // Opcional: Captura la fecha de entrega asignada y la muestra en la consola
